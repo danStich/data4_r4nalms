@@ -1,4 +1,4 @@
-# rworkshops
+# data4_r4nalms
 Data repository for R4NALMS workshop
 
 # Use
