@@ -282,9 +282,7 @@ aggregate(formula=temp~month, data=otsego, FUN=mean)
 # Summarize temperature by month in otsego data
 aggregate(formula=temp~month+depth, data=otsego, FUN=mean)
 
-
-library(plyr)
-library(plyr, "~/R Working Directory/data4_r4nalms-master")
+library(plyr, "r_libs")
         
 # Summarize mean and sd by month and depth
 summarydata <- ddply(

@@ -1,7 +1,7 @@
 # 3. Thermocline depth analysis ----
-library(lubridate, lib.loc = 'r_libs/')
-library(rLakeAnalyzer, lib.loc = 'r_libs/')
-library(ggplot2, lib.loc = 'r_libs/')
+library(lubridate, lib.loc = 'r_libs')
+library(rLakeAnalyzer, lib.loc = 'r_libs')
+library(ggplot2, lib.loc = 'r_libs')
 
 # Read in the data
 limnos <- read.csv('physical.csv')

@@ -252,7 +252,7 @@ mainmod <- lm(formula=logSecchi~GNIS.Class + Year,
               data=ohio)
 
 # Take a look at the summary of the model
-library(car, lib.loc = 'r_libs/car')
+library(car, lib.loc = 'r_libs')
 Anova(mainmod)
 
 summary(intmod)
@@ -281,7 +281,7 @@ lim <- na.omit(otsego)
 # plot from top to bottom.
 lim$depth = -1 *lim$depth
 
-library(akima, lib.loc = '/r_lib/akima')
+library(akima, lib.loc = 'r_libs')
 
 # Create a data frame containing the
 # x, y, and z variables of interest
