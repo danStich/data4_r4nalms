@@ -1,29 +1,163 @@
-ohio <- read.csv('ohio.csv', stringsAsFactors = FALSE)
+
+vermont <- read.csv('vermont.csv', stringsAsFactors = FALSE)
+
 
 # Like this:
-str(ohio)
+str(vermont)
 
-names(ohio)
+
+
+names(vermont)
+
+
 
 # First, we replace Secchi..m. with Secchi
-names(ohio)[7] <- "Secchi"
+names(vermont)[7] <- "Secchi"
 
 # Next, we replace County..Borough.Parrish.
 # with just County because we are working in a 
-# single state in this case, not becuase we are
+# single state in this case, not because we are
 # County-centric :)
-names(ohio)[11] <- "County"
+names(vermont)[11] <- "County"
+
+
 
 # Replace names of both at once
 # because that is cooler than one
 # at a time.
-names(ohio)[c(7,11)] <- c('Secchi', 'County')
+names(vermont)[c(7,11)] <- c('Secchi', 'County')
 
-#Check that it worked!
-names(ohio)
+
+
+# Print the names of the df
+# to the console so we can 
+# see them.
+names(vermont)
+
+
+library(rgdal)
+VT <- rgdal::readOGR("VT_Data__State_Boundary.shp")
+
+
+# Remove those points with missing longitude and latitude
+d <- vermont[!is.na(vermont$Longitude) | !is.na(vermont$Latitude),]
+
+
+
+# Load sp package
+library(sp)
+
+# Assign longitude and latitude to a 
+# SpatialPoints-class obj
+coord_dd = sp::SpatialPoints(cbind(d$Longitude, d$Latitude),
+                             proj4string=CRS("+proj=longlat"))
+
+
+
+
+# Get UTMs for the longitudes and latitudes using
+# the coordinate system of our shape file
+coord_utm <- sp::spTransform(coord_dd, CRS(proj4string(VT)))
+
+
+
+# Assign the coordinates to new columns
+# in our dataframe
+d$x <- coord_utm@coords[,1]
+d$y <- coord_utm@coords[,2]
+sp::coordinates(d) <- ~ x + y
+
+
+
+sp::proj4string(d) <- sp::proj4string(VT)
+
+
+# We'll use the ggplot2 library
+library(ggplot2)
+
+# Make the plot
+ggplot() + 
+geom_polygon(data = fortify(VT),
+             color = "black",
+             fill = "gray40",
+             aes(x=long, y=lat)) +
+#coord_sf() +
+geom_point(data = data.frame(d),
+           mapping = aes(x = x, y = y)) +
+labs(x="Easting", y="Northing") +
+ggtitle("Vermont lakes") + 
+theme(plot.title = element_text(hjust = .5),
+      text = element_text(size = 10)
+      ) +    
+  
+# Adjusting output width: distorts CRS  
+# but can actually see the plot
+coord_equal(ratio=.5)
+
+
+
+
+# Perform a spatial intersect between
+# the Vermont shapefile (polygon) and
+# the SpatialPoints object.
+# Note that order is important here.
+ins <- sp::over(d, VT)
+
+# Then, we can drop the points that 
+# do not not intersect with the polygon,
+# now saving over the original data set.
+dd <- d[!is.na(ins[,1]),]
+
+# Get the modified data back out of the
+# SpatialPoints object
+vermont <- dd@data
+
+
+# We'll use the ggplot2 library
+library(ggplot2)
+
+# Make the plot
+ggplot() + 
+geom_polygon(data = fortify(VT),
+             color = "black",
+             fill = "gray60",
+             aes(x=long, y=lat)) +
+coord_sf() +  
+geom_point(data = data.frame(dd),
+           mapping = aes(x = x, y = y)) +
+labs(x="Easting", y="Northing") +
+ggtitle("Vermont lakes") + 
+theme(plot.title = element_text(hjust = .5),
+      text = element_text(size = 10)
+      )
+
+
+# Make the plot...again
+ggplot() + 
+geom_polygon(data = fortify(VT),
+             color = "black",
+             fill = "gray90",
+             aes(x=long, y=lat)) +
+coord_sf() +
+geom_point(data = data.frame(dd),
+           mapping = aes(x = x, y = y, color = dd$Secchi),
+           alpha=.5, size=3) +
+labs(x="", y="") +
+ggtitle("Secchi depth (m)") + 
+theme(plot.title = element_text(hjust = .5, face = "bold"),
+      text = element_text(size = 14),
+      legend.position = 'right',
+      legend.title.align = 0,
+      panel.background = element_blank(),
+      axis.ticks.y = element_blank(),axis.text.y = element_blank(),
+      axis.ticks.x = element_blank(),axis.text.x = element_blank()
+      ) +
+scale_colour_gradientn("", colours=c("gray90","black"))
+
+
 
 # Make the histogram
-hist(ohio$Secchi, 
+hist(vermont$Secchi, 
      col='gray87',
      yaxt='n', xaxt='n',
      xlab='Secchi depth (m)',
@@ -31,58 +165,64 @@ hist(ohio$Secchi,
 axis(side=1, pos=0)
 axis(side=2, las=2, pos=0)
 
+
+
 # Make the histogram, this time
 # subtracting the mean from each 
 # value. Is the result normal?
-hist(ohio$Secchi-mean(ohio$Secchi),
+hist(vermont$Secchi-mean(vermont$Secchi),
      col='gray87', 
      yaxt='n', xaxt='n',
      xlab='Error',
      main='')
 axis(side=1, pos=0)
-axis(side=2, las=2, pos=-1)
+axis(side=2, las=2, pos=-5)
 
-#Transformations
-ohio$logSecchi <- log(ohio$Secchi)
+
+
+vermont$logSecchi <- log(vermont$Secchi)
+
+
 
 # Make the histogram,
 # subtracting the mean from each 
 # value. Is the result normal?
-hist(ohio$logSecchi-mean(ohio$logSecchi),
+hist(vermont$logSecchi-mean(vermont$logSecchi),
      col='gray87', 
      yaxt='n', xaxt='n',
      xlab='Error',
      main='')
 axis(side=1, pos=0)
-axis(side=2, las=2, pos=-3.5)
+axis(side=2, las=2, pos=-2.3)
 
-#####Is this code below different than the code above? Or is it supposed to be?
+
+
 # Make the histogram.
-hist(ohio$logSecchi-mean(ohio$logSecchi),
+hist(vermont$logSecchi,
      col='gray87', 
      yaxt='n', xaxt='n',
      xlab='Error',
      main='')
 axis(side=1, pos=0)
-axis(side=2, las=2, pos=-3.5)
+axis(side=2, las=2, pos=-.75)
 
 
-#Introductory statistics in R
-ohio <- ohio[ohio$GNIS.Class=="Lake" | ohio$GNIS.Class=="Reservoir", ]
 
-#Wilcoxon rank-sums test
+vermont <- vermont[vermont$GNIS.Class=="Lake" | vermont$GNIS.Class=="Reservoir", ]
+
+
 
 # Wilcox test to assess the null hypothesis
 # that there is no difference in Secchi between
 # lakes and reservoirs.
-wilcox.test(x=ohio$Secchi[ohio$GNIS.Class=='Lake'],
-            y=ohio$Secchi[ohio$GNIS.Class=='Reservoir'])
+wilcox.test(x=vermont$Secchi[vermont$GNIS.Class=='Lake'],
+            y=vermont$Secchi[vermont$GNIS.Class=='Reservoir'])
 
-#Parametric statistics in R
+
 
 # T-test to assess the null hypothesis
 # that there is no difference in Secchi
-# between lakes and reservoirs in Ohio.
+# between lakes and reservoirs in Vermont.
 
 # We use logSecchi to meet assumptions
 # of normality.
@@ -95,27 +235,31 @@ wilcox.test(x=ohio$Secchi[ohio$GNIS.Class=='Lake'],
 # are not equal, and this defaults to 
 # a Welch's t-test that uses a calculated df
 # to adjust the calculated test statistic.
-t.test(logSecchi~GNIS.Class, data=ohio, equal=FALSE)
+t.test(logSecchi~GNIS.Class, data=vermont, equal=FALSE)
+
+
+# T-test to assess the null hypothesis
+# that there is no difference in Secchi
+# between lakes and reservoirs in Vermont.
+
+# We can specify this one using a formula.
+mod <- t.test(logSecchi~GNIS.Class, data=vermont, equal=FALSE)
+
+
 
 # Make a boxplot of Secchi by waterbody type
-
-# Specify notch=TRUE to get a visual
-# approximation of significance by comparing
-# the spread of the notches. In this case, we
-# have a ton of data, so the notches are barely
-# visible...something to think about when you
-# are doing hypothesis testing with tons
-# of data.
 
 # We make the boxes narrower because
 # flat, wide boxes look gross and 
 # make people not want to use R for
 # graphing even though it is awesome.
-boxplot(logSecchi~GNIS.Class,
-        data = ohio,
+boxplot(Secchi~GNIS.Class,
+        data = vermont,
         notch=TRUE,
         col='gray87',
-        ylab=expression(paste('log'[e],'Secchi depth')),
+        ylim=c(0, 12),
+        xlab='Waterbody type',
+        ylab='Secchi depth',
         boxwex = .25,
         outline=FALSE,
         yaxt='n',
@@ -129,20 +273,22 @@ boxplot(logSecchi~GNIS.Class,
           boxlwd=2,
           boxcol='gray40'
         )
-)
+        )
 axis(side=2, las=2)
 
-#Analysis of variance
+
 
 # Fit an ANOVA to test for differences in
 # means between groups
-mod <- lm(logSecchi~GNIS.Class, data=ohio)
+mod <- lm(logSecchi~GNIS.Class, data=vermont)
+
+
 
 # There are four plots that come out
 # of this call. To see them all at 
 # once, you need to set up the plotting
 # window to accomodate that. Otherwise, 
-# you have to hit ENTER to scroll
+# you have to hit ENTER (RETURN) to scroll
 # through them one at a time.
 
 par(mfrow=c(2, 2))
@@ -152,15 +298,25 @@ par(mfrow=c(2, 2))
 
 plot(mod)
 
+
+
 # Get ANOVA summary for the model
 anova(mod)
 
-TukeyHSD(aov(mod))
+
+
+TukeyHSD( aov(mod))
+
 
 # Change 
-ohio$Year <- as.numeric(ohio$Year, 'Year ')
+vermont$Year <- as.numeric(vermont$Year, 'Year ')
 
-lmod <- lm(logSecchi~Latitude, data=ohio)
+
+
+names(vermont)[18] <- 'Elevation'
+lmod <- lm(logSecchi~Elevation, data=vermont)
+
+
 
 # Look at residuals for model
 # testing effect of latitude
@@ -168,7 +324,11 @@ lmod <- lm(logSecchi~Latitude, data=ohio)
 par(mfrow=c(2,2))
 plot(lmod)
 
+
+
 summary(lmod)
+
+
 
 # Make new values of Latitude
 # that we can use to predict 
@@ -192,12 +352,14 @@ summary(lmod)
 # line graphs of our predictions.
 
 newd <- data.frame(
-  Latitude = seq(
-    from=min(ohio$Latitude, na.rm=T),
-    to=max(ohio$Latitude, na.rm=T),
+  Elevation = seq(
+    from=min(vermont$Elevation, na.rm=T),
+    to=max(vermont$Elevation, na.rm=T),
     by=.01
+    )
   )
-)
+
+
 
 # Make predictions from the model using
 # the new data.
@@ -208,59 +370,54 @@ newd <- data.frame(
 preds <- predict(object = lmod,
                  newdata = newd,
                  interval = 'prediction'
-)
+                 )
+
+
 
 # Take a look at the first few
 # rows of the preds dataframe
 head(preds)
 
-# Apply the exponentiation 
-# to each column in the 
-# dataframe.
-preds <- apply(X=preds, MARGIN=2, FUN=exp)
 
-# Have a look at the first
-# few rows of the df
-head(preds)
 
-plot(x = ohio$Latitude,
-     y = ohio$Secchi,
-     xlab = 'Latitude (decimal min)',
-     ylab = 'Secchi depth (m)',
-     pch=21,
-     col=rgb(0.5,0.5,0.5,0.10),
-     bg=rgb(0.5,0.5,0.5,0.10),
-     ylim=c(0,10)
-)
+# Get a dataframe with mean by elevation to clean
+# things up a little
+library(plyr)
+means=ddply(vermont, 'Elevation', summarize, mu=mean(logSecchi))
+
+# Make the base plot, axes, etc.
+plot(x = means$Elevation,
+     y = means$mu,
+     xlab = 'Elevation (m)',
+     ylab = expression(paste('log '[e],'Secchi depth (m)')),
+     col="gray",
+     ylim=c(0,max(vermont$logSecchi)),
+     yaxt='n'
+     )
+# Add a rotated y-axis
+axis(side = 2, las=2, at = log(c(1,5,10,15)), c(1,5,10,15))
+
+# Plot a polygon
+polygon(x=c(newd$Elevation, rev(newd$Elevation)),
+        y=c(preds[,2], rev(preds[,3])),
+        col='gray87', border=NA)
+
+# Add the raw data over the top of the polygon
+points(means$Elevation, means$mu, pch=21, bg='gray40', col='gray40')
 
 # Now, add the lines for the mean, lower, and
 # upper CIs from the model that we used
-lines(newd$Latitude, preds[,1], lwd=2, lty=1, col='blue')
-lines(newd$Latitude, preds[,2], lwd=2, lty=2, col='red')
-lines(newd$Latitude, preds[,3], lwd=2, lty=2, col='red')
+lines(newd$Elevation, preds[,1], lwd=1, lty=1, col='black')
+lines(newd$Elevation, preds[,2], lwd=1, lty=2, col='black')
+lines(newd$Elevation, preds[,3], lwd=1, lty=2, col='gray40')
 
-# Fit a linear regression model to test
-# effect of `year` on `logSecchi`
-ymod <- lm(logSecchi~Year, data=ohio)
-summary(ymod)
 
-#Analysis of covariance
-library(car)
 
-# Fit the model and store it to an object
-mainmod <- lm(formula=logSecchi~GNIS.Class + Year,
-              data=ohio)
-
-# Take a look at the summary of the model
-library(car, lib.loc = 'r_libs')
-Anova(mainmod)
-
-summary(intmod)
-
-#Response surfaces (isopleths)
 otsego <- read.csv('physical.csv')
 
-#Data formatting & extraction
+
+
+# Data formatting & extraction
 
 # First, we convert the date column
 # to a character string. We pass the
@@ -272,16 +429,23 @@ otsego <- read.csv('physical.csv')
 otsego$date <- as.Date(
   as.character(otsego$date),
   format="%m/%d/%Y"
-)
+  )
+
+
 
 # Remove NA values to make life easier
 lim <- na.omit(otsego)
+
+
 
 # Multiply depth column by -1 so depth will
 # plot from top to bottom.
 lim$depth = -1 *lim$depth
 
-library(akima, lib.loc = 'r_libs')
+
+library(akima)
+
+
 
 # Create a data frame containing the
 # x, y, and z variables of interest
@@ -296,7 +460,9 @@ im = with(plotter,
           interp(x, y, z, duplicate='mean',
                  nx=length(unique(lim$date)),
                  ny=length(unique(lim$depth)))
-)
+          )
+
+
 
 # Plot the isopleth
 # filled.contour is the function that actually 
@@ -344,19 +510,19 @@ filled.contour(
   ylab='Depth (m)',
   # Axis options
   plot.axes = {  
-    # This is how we include
-    # countour lines
-    contour(                            
-      im$x,                             
-      im$y,                             
-      im$z,                             
-      nlevels = 26,                     
-      drawlabels = FALSE,               
-      col = topo.colors(26),
-      lwd = 1,                          
-      lty = 2,                          
-      add = TRUE
-    )
+        # This is how we include
+        # countour lines
+        contour(                            
+        im$x,                             
+        im$y,                             
+        im$z,                             
+        nlevels = 26,                     
+        drawlabels = FALSE,               
+        col = topo.colors(26),
+        lwd = 1,                          
+        lty = 2,                          
+        add = TRUE
+        )
     # Y-axis
     axis(2, at=seq(0,-50,-10),
          labels=seq(0,50,10)
@@ -366,16 +532,15 @@ filled.contour(
          at=seq(as.Date("2017/05/01"),
                 by="2 months",
                 length.out=16
-         ), 
+                ), 
          labels = format(
            seq(as.Date("2017/05/01"),
                by="2 months",
                length.out=16
-           ),
+               ),
            "%b %Y"
-         )
+           )
     )
   }                                     
 )             
 
-#ta-da!
