@@ -2,7 +2,7 @@
 Data repository for R4NALMS workshop
 
 # How to get the files for workshop
-Please click on the green `Clone or download` button in the upper right corner and then `Download ZIP` to save as a compressed file on your computer. The files will need to be extracted ("unzipped") before they can be accessed by R.
+Please click on the green `code` button in the upper right corner and then `Download ZIP` to save as a compressed file on your computer. The files will need to be extracted ("unzipped") before they can be accessed by R.
 
 # What is this stuff?
 The complete R code and data for both introductory and intermediate workshop sessions:
