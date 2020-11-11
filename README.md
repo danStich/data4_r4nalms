@@ -9,6 +9,7 @@ The complete R code and data for both introductory and intermediate workshop ses
 
 ## Introductory
 `Introductory.R` This is the script for the first half of the Introductory session. We will not to everything here. It is beefy so you can come back to it and play!
+
 `Introductory-II.R` This is the script for the second half of the Introductory session which will focus on data manipulation and plotting in the `tidyverse`.
 
 `data/physical` A csv file containing vertical profile data from Otsego Lake, NY for the last few decades.
