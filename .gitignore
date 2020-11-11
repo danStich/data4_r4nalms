@@ -25,7 +25,3 @@ vignettes/*.pdf
 # Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
 rsconnect/
 .Rproj.user
-data4_r4nalms.Rproj
-otsego.rda
-summary.csv
-physicalF.csv
