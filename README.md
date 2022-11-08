@@ -17,6 +17,4 @@ The complete R code and data for both introductory and intermediate workshop ses
 ## Intermediate
 `Intermediate.R` This is the script for the Intermediate R session.
 
-`data/minnesota.csv` This is a subset of the Secchi Dip-In data that we will play with during the Intermediate session.
-
-`data/Boundaries_of_Minnesota.*` These are GIS files needed to do some basic GIS in R with the Secchi Dip-In data.
+`data/physical.csv` A csv file containing vertical profile data from Otsego Lake, NY for the last few decades.
