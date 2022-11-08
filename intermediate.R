@@ -13,7 +13,7 @@ names(otsego)
 
 
 # First, we replace temp with Temperature
-names(otsego)[3] <- "Temperature"
+names(otsego)[5] <- "Temperature"
 
 # Print the names of the df
 # to the console so we can
@@ -25,14 +25,8 @@ library(lubridate)
 # Get date in a standard, unambiguous format
 otsego$date <- as.Date(otsego$date, format = "%m/%d/%Y")
 
-# Make a variable to hold year in the df
-otsego$year <- year(otsego$date)
-
-# Make a variable to hold month
-otsego$month_num <- month(otsego$date)
-
-# Convert this to a factor so it can be easily re-leveled and ordered
-otsego$month <- month.abb[otsego$month_num]
+# Make month into a factor so it can be easily re-leveled and ordered
+otsego$month <- month.abb[otsego$month]
 otsego$month <- factor(otsego$month, levels = month.abb)
 
 # Let's make an ordinal date variable to get day of year as well
@@ -240,3 +234,4 @@ filled.contour(
            pch=21, bg=rgb(0,0,0,.05), xpd=T)
     
   })
+
